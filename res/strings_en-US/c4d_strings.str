@@ -1,0 +1,10 @@
+STRINGTABLE
+{
+	IDS_CDSPRNGKYS "CD Springy Keys";
+	IDS_STIFFNESS "Stiffness";
+	IDS_DAMPING "Damping";
+	IDS_MASS "Mass";
+	IDS_POS_FORCES "Position";
+	IDS_SCA_FORCES "Scale";
+	IDS_ROT_FORCES "Rotation";
+}

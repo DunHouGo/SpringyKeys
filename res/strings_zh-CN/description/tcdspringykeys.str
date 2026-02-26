@@ -1,0 +1,22 @@
+STRINGTABLE tCDSpringyKeys
+{
+	tCDSpringyKeys "CD Springy Keys";
+	SPK_USE_POSITION "\u4f4d\u7f6e";
+	SPK_USE_SCALE "\u65cb\u8f6c";
+	SPK_USE_ROTATION "\u7f29\u653e";
+	SPK_STRENGTH "\u5f3a\u5ea6";
+	SPK_P_STIFFNESS "\u521a\u5ea6";
+	SPK_P_DAMPING "\u963b\u5c3c";
+	SPK_P_MASS "\u8d28\u91cf";
+	SPK_SPLIT_FORCES "\u5206\u79bb\u529b (P/S/R)";
+	SPK_ID_FORCES "\u529b";
+	SPK_ID_SPLIT "\u5206\u79bb";
+	SPK_ID_S "\u7f29\u653e";
+	SPK_ID_R "\u65cb\u8f6c";
+	SPK_S_STIFFNESS "\u7f29\u653e\u521a\u5ea6";
+	SPK_S_DAMPING "\u7f29\u653e\u963b\u5c3c";
+	SPK_S_MASS "\u7f29\u653e\u8d28\u91cf";
+	SPK_R_STIFFNESS "\u65cb\u8f6c\u521a\u5ea6";
+	SPK_R_DAMPING "\u65cb\u8f6c\u963b\u5c3c";
+	SPK_R_MASS "\u65cb\u8f6c\u8d28\u91cf";
+}
