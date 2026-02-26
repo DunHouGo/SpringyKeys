@@ -59,14 +59,11 @@ This project is shared with the community to keep Dan’s work alive.
   - If disabled, rotation stays exactly on the animated target.
 
 - **Strength**
-  - Blends between:
-    - `0%` = no spring influence (pure target)
-    - `100%` = full spring result
   - Internally used as a blend factor.
 
 ### Forces
 
-- **Split Forces (P/S/R)** (`SPK_SPLIT_FORCES`)
+- **Split Forces (P/S/R)**
   - When **off**: Position stiffness/damping/mass are also used for Scale and Rotation.
   - When **on**: Position/Scale/Rotation each have their own stiffness/damping/mass.
 
