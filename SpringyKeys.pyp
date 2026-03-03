@@ -6,7 +6,7 @@ from c4d import plugins
 from dataclasses import dataclass, field
 from typing import Any, Tuple
 
-PLUGIN_ID_TAG = 10595390
+PLUGIN_ID_TAG = 1067631
 
 SPK_PURCHASE = 1000
 SPK_STRENGTH = 1200
