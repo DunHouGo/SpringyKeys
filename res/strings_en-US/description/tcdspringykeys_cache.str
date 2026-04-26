@@ -1,22 +1,58 @@
-STRINGTABLE tCDSpringyKeys
+STRINGTABLE tcdspringykeys_cache
+
 {
-	tCDSpringyKeys "CD Springy Keys";
+
+	tcdspringykeys_cache "CD Springy Keys (Bake PSR)";
+
 	SPK_USE_POSITION "Position";
+
 	SPK_USE_SCALE "Scale";
+
 	SPK_USE_ROTATION "Rotation";
+
 	SPK_STRENGTH "Strength";
+
 	SPK_P_STIFFNESS "Stiffness";
+
 	SPK_P_DAMPING "Damping";
+
 	SPK_P_MASS "Mass";
+
 	SPK_SPLIT_FORCES "Split Forces (P/S/R)";
+
 	SPK_ID_FORCES "Forces";
+
 	SPK_ID_SPLIT "Split";
+
+	SPK_ID_P "Position";
+
 	SPK_ID_S "Scale";
+
 	SPK_ID_R "Rotation";
+
 	SPK_S_STIFFNESS "S.Stiffness";
+
 	SPK_S_DAMPING "S.Damping";
+
 	SPK_S_MASS "S.Mass";
+
 	SPK_R_STIFFNESS "R.Stiffness";
+
 	SPK_R_DAMPING "R.Damping";
+
 	SPK_R_MASS "R.Mass";
+
+	SPK_ID_BAKE "Bake";
+
+	SPK_BAKE_PSR "Bake Keys";
+
+	SPK_RESTORE_PSR "Un-Bake Keys";
+
+	SPK_BAKE_ALL_IN_SCENE "Bake All";
+
+	SPK_UNBAKE_ALL_IN_SCENE "Un-Bake All";
+
+	SPK_PSR_BACKUP_PAYLOAD "";
+
 }
+

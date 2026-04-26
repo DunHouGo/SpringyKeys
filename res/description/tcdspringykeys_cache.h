@@ -1,5 +1,8 @@
-#ifndef _tCDSpringyKeys_H_
-#define _tCDSpringyKeys_H_
+#ifndef TCDSPRINGYKEYS_CACHE_H__
+#define TCDSPRINGYKEYS_CACHE_H__
+
+/* Tag parameters (must match SpringyKeys.pyp). Do not define the CONTAINER /
+   STRINGTABLE symbol here — including this name as an enum breaks .str files. */
 
 enum
 {
@@ -25,11 +28,23 @@ enum
 	SPK_ID_P           = 3002,
 	SPK_ID_S           = 3003,
 	SPK_ID_R           = 3004,
-	// Internal state (tag storage)
+	SPK_ID_BAKE        = 4000,
+	SPK_BAKE_PSR       = 4010,
+	SPK_BAKE_ALL_IN_SCENE = 4016,
+	SPK_UNBAKE_ALL_IN_SCENE = 4017,
+	SPK_RESTORE_PSR    = 4011,
+	SPK_FORCES_LOCKED_BY_BAKE = 4012,
+	SPK_PSR_BACKUP_PAYLOAD = 4013,
+	SPK_RUNTIME_SEEDED = 4014,
+	SPK_CACHE_REL_POS  = 4018,
+	SPK_CACHE_REL_ROT  = 4019,
+	SPK_CACHE_REL_SCA  = 4020,
+	SPK_REL_CACHE_VALID = 4021,
 	SPK_PREV_TIME      = 10000,
 	SPK_PREV_M         = 10001,
 	SPK_PREV_SCA       = 10002,
-	SPK_PREV_FRAME     = 10003
+	SPK_PREV_FRAME     = 10003,
+	SPK_DEBUG          = 11000
 };
 
 #endif

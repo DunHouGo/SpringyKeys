@@ -1,6 +1,6 @@
 STRINGTABLE
 {
-	IDS_CDSPRNGKYS "CD Springy Keys";
+	IDS_CDSPRNGKYS "CD Springy Keys (Bake PSR)";
 	IDS_STIFFNESS "\u521a\u5ea6";
 	IDS_DAMPING "\u963b\u5c3c";
 	IDS_MASS "\u8d28\u91cf";
