@@ -98,6 +98,38 @@ _SPK_FORCE_PARAM_IDS = frozenset(
 MAXFORCE = 1000000.0
 
 
+def _show_message_dialog(message: str) -> None:
+    """Show a user-facing message dialog when the plugin needs explicit feedback."""
+    try:
+        c4d.gui.MessageDialog(message)
+    except Exception:
+        pass
+
+
+def _show_bake_all_result(baked_count: int, skipped_locked_count: int) -> None:
+    """Report the Bake All result to the user."""
+    if baked_count == 0 and skipped_locked_count == 0:
+        _show_message_dialog("Bake All: no Springy Keys tags were found in this document.")
+        return
+
+    message: str = f"Bake All completed on {baked_count} tag(s)."
+    if skipped_locked_count:
+        message += f"\nSkipped {skipped_locked_count} baked tag(s). Please un-bake them first."
+    _show_message_dialog(message)
+
+
+def _show_unbake_all_result(invoked_count: int) -> None:
+    """Report the Un-Bake All result to the user."""
+    if invoked_count == 0:
+        _show_message_dialog("Un-Bake All: no Springy Keys tags were found in this document.")
+        return
+
+    _show_message_dialog(
+        f"Un-Bake All completed on {invoked_count} tag(s).\n"
+        "Only tags with a saved bake backup were restored."
+    )
+
+
 def _psr_backup_to_json(backup: Optional[Dict[str, Any]]) -> str:
     if not backup:
         return ""
@@ -933,9 +965,9 @@ class SpringyKeysTag(plugins.TagData):
         if not description.LoadDescription(PLUGIN_DESC_NAME):
             if not _LOAD_DESC_FAIL_LOGGED:
                 _LOAD_DESC_FAIL_LOGGED = True
-                print(
-                    f"[SpringyKeys (Bake PSR)] LoadDescription('{PLUGIN_DESC_NAME}') failed — "
-                    "check that res/description and res/strings_* were copied with the .pyp."
+                _show_message_dialog(
+                    f"Springy Keys failed to load the tag description '{PLUGIN_DESC_NAME}'.\n"
+                    "Please check whether the res/description and res/strings_* files are present."
                 )
             return False
 
@@ -979,25 +1011,13 @@ class SpringyKeysTag(plugins.TagData):
                 doc = node.GetDocument()
                 if doc is not None:
                     n, skipped = springy_keys_run_bake_all_on_document(doc)
-                    if n == 0 and skipped == 0:
-                        print("[Springy Keys] Bake All: no Springy Keys tags in this document.")
-                    else:
-                        msg = f"[Springy Keys] Bake All: Bake Keys on {n} tag(s)."
-                        if skipped:
-                            msg += f" Skipped {skipped} already baked (Un-Bake first)."
-                        print(msg)
+                    _show_bake_all_result(n, skipped)
                 return True
             if cid == SPK_UNBAKE_ALL_IN_SCENE:
                 doc = node.GetDocument()
                 if doc is not None:
                     k = springy_keys_run_unbake_all_on_document(doc)
-                    if k == 0:
-                        print("[Springy Keys] Un-Bake All: no Springy Keys tags in this document.")
-                    else:
-                        print(
-                            "[Springy Keys] Un-Bake All: invoked on "
-                            f"{k} tag(s) (restores only where a backup exists)."
-                        )
+                    _show_unbake_all_result(k)
                 return True
         # Python TagData has no super.Message; returning True is correct for unhandled messages.
         return True
@@ -1063,13 +1083,13 @@ class SpringyKeysTag(plugins.TagData):
         doc = tag.GetDocument() if tag else None
         op = tag.GetObject() if tag else None
         if doc is None or op is None:
-            print("[SpringyKeys] Bake Keys: need host object and document.")
+            _show_message_dialog("Bake Keys requires a valid host object and document.")
             return
         bc = tag.GetDataInstance()
         if bc is None:
             return
         if bc.GetBool(SPK_FORCES_LOCKED_BY_BAKE):
-            print("[SpringyKeys] Bake Keys: Un-Bake Keys first, then bake again.")
+            _show_message_dialog("This tag is already baked. Please run Un-Bake Keys before baking again.")
             return
         fps = max(int(doc.GetFps()), 1)
         sf, ef = _scene_preview_frame_range(doc)
@@ -1133,7 +1153,7 @@ class SpringyKeysTag(plugins.TagData):
             bc.SetString(SPK_PSR_BACKUP_PAYLOAD, _psr_backup_to_json(self._psr_key_backup))
             bake_ok = True
         except Exception as ex:
-            print("[SpringyKeys] Bake Keys failed:", ex)
+            _show_message_dialog(f"Bake Keys failed.\n{ex}")
         finally:
             try:
                 doc.SetTime(saved)
@@ -1147,10 +1167,10 @@ class SpringyKeysTag(plugins.TagData):
                 tag.SetDirty(c4d.DIRTYFLAGS_DATA)
             except Exception:
                 pass
-            print(
-                f"[SpringyKeys] Baked keys on '{op.GetName()}' over document preview "
-                f"frames {sf}-{ef}. Spring forces are locked until Un-Bake Keys "
-                "(pre-bake keys are saved with the project)."
+            _show_message_dialog(
+                f"Bake Keys completed for '{op.GetName()}'.\n"
+                f"Frame range: {sf}-{ef}\n"
+                "Spring forces are now locked until Un-Bake Keys is used."
             )
 
     def _restore_psr_from_backup(self, node):
@@ -1161,7 +1181,7 @@ class SpringyKeysTag(plugins.TagData):
             return
         backup = self._psr_backup_resolve(tag)
         if backup is None:
-            print("[SpringyKeys] Un-Bake: no backup (use Bake Keys once first).")
+            _show_message_dialog("No baked backup was found. Please run Bake Keys first.")
             return
         bc = tag.GetDataInstance()
         doc.StartUndo()
@@ -1182,7 +1202,7 @@ class SpringyKeysTag(plugins.TagData):
             self._op_state = _State()
             self._prv_state = _State()
         except Exception as ex:
-            print("[SpringyKeys] Un-Bake Keys failed:", ex)
+            _show_message_dialog(f"Un-Bake Keys failed.\n{ex}")
         finally:
             doc.EndUndo()
         c4d.EventAdd()
@@ -1190,7 +1210,7 @@ class SpringyKeysTag(plugins.TagData):
             tag.SetDirty(c4d.DIRTYFLAGS_DATA)
         except Exception:
             pass
-        print("[SpringyKeys] Un-Bake: restored pre-bake keys and re-enabled spring forces.")
+        _show_message_dialog("Un-Bake Keys completed. The pre-bake keys were restored and spring forces were re-enabled.")
 
     def Execute(self, tag, doc, op, bt, priority, flags):
         bc = tag.GetDataInstance()
@@ -1199,13 +1219,6 @@ class SpringyKeysTag(plugins.TagData):
         if bc.GetBool(SPK_FORCES_LOCKED_BY_BAKE):
             return c4d.EXECUTIONRESULT_OK
 
-        dbg = DEBUG_ENABLED or bc.GetBool(SPK_DEBUG)
-        if dbg:
-            try:
-                print("[SpringyKeys] Execute", doc.GetTime().Get(), "frm", doc.GetTime().GetFrame(doc.GetFps()), "flags", flags)
-            except Exception:
-                pass
-        
         trgM = op.GetMl()
         opSca = op.GetAbsScale()
         bTime = doc.GetTime()
@@ -1429,13 +1442,6 @@ class SpringyKeysTag(plugins.TagData):
             self._rk4.integrate(curState, deltaTime)
             self._op_state = curState
 
-        if dbg:
-            try:
-                print("[SpringyKeys] locRotQ", curState.orientation.w, curState.orientation.x, curState.orientation.y, curState.orientation.z)
-                print("[SpringyKeys] angVel", self._op_state.angularVelocity, "angMom", self._op_state.angularMomentum)
-            except Exception:
-                pass
-
         # 设置物体位姿
         # 原版 C++:
         # Matrix dtRotM = opState.orientation.GetMatrix();
@@ -1507,13 +1513,7 @@ class SpringyKeysBakeAllCommand(plugins.CommandData):
         if doc is None:
             return False
         n, skipped = springy_keys_run_bake_all_on_document(doc)
-        if n == 0 and skipped == 0:
-            print("[Springy Keys] Bake All: no Springy Keys tags in this document.")
-        else:
-            msg = f"[Springy Keys] Bake All: Bake Keys on {n} tag(s)."
-            if skipped:
-                msg += f" Skipped {skipped} already baked (Un-Bake first)."
-            print(msg)
+        _show_bake_all_result(n, skipped)
         return True
 
 
@@ -1526,13 +1526,7 @@ class SpringyKeysUnbakeAllCommand(plugins.CommandData):
         if doc is None:
             return False
         k = springy_keys_run_unbake_all_on_document(doc)
-        if k == 0:
-            print("[Springy Keys] Un-Bake All: no Springy Keys tags in this document.")
-        else:
-            print(
-                "[Springy Keys] Un-Bake All: invoked on "
-                f"{k} tag(s) (restores only where a backup exists)."
-            )
+        _show_unbake_all_result(k)
         return True
 
 
@@ -1552,20 +1546,18 @@ if __name__ == '__main__':
         description=PLUGIN_DESC_NAME,
         icon=tag_icon,
     )
-    if reg_ok is False:
-        print("[SpringyKeys (Bake PSR)] RegisterTagPlugin failed.")
-    else:
-        print(
-            f"[SpringyKeys (Bake PSR)] Loaded OK — plugin id {PLUGIN_ID_TAG}, "
-            f"description '{PLUGIN_DESC_NAME}', path {plugin_path}"
-        )
+
 
     for cmd_id, title, cls in (
         (PLUGIN_ID_CMD_BAKE_ALL, "Springy Keys: Bake All", SpringyKeysBakeAllCommand),
         (PLUGIN_ID_CMD_UNBAKE_ALL, "Springy Keys: Un-Bake All", SpringyKeysUnbakeAllCommand),
     ):
-        ok_cmd = plugins.RegisterCommandPlugin(id=cmd_id, str=title, info=0, dat=cls())
-        if ok_cmd is False:
-            print(f"[Springy Keys] RegisterCommandPlugin failed for id {cmd_id}.")
-        else:
-            print(f"[Springy Keys] Command registered: {title} (id {cmd_id})")
+        reg_cmd_ok: bool = plugins.RegisterCommandPlugin(
+            id=cmd_id,
+            str=title,
+            info=0,
+            help="",
+            icon=None,
+            dat=cls(),
+        )
+
