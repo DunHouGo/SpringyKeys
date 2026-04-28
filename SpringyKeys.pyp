@@ -4,6 +4,7 @@ import math
 import os
 import c4d
 from c4d import plugins
+from c4d.plugins import GeLoadString
 
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
@@ -16,6 +17,38 @@ PLUGIN_ID_CMD_BAKE_ALL = 1068108
 PLUGIN_ID_CMD_UNBAKE_ALL = 1068109
 # Must match basename of res/description/<name>.res (RegisterTagPlugin / LoadDescription).
 PLUGIN_DESC_NAME = "tcdspringykeys_cache"
+
+IDS_CDSPRNGKYS = 10000
+IDS_STIFFNESS = 10001
+IDS_DAMPING = 10002
+IDS_MASS = 10003
+IDS_POS_FORCES = 10004
+IDS_SCA_FORCES = 10005
+IDS_ROT_FORCES = 10006
+IDS_POSITION_FORCES = 10007
+IDS_TAG_NAME = 10008
+IDS_CMD_BAKE_ALL = 10009
+IDS_CMD_UNBAKE_ALL = 10010
+IDS_STATUS_BAKE_SAMPLING = 10011
+IDS_STATUS_BAKE_WRITING = 10012
+IDS_MSG_DESC_LOAD_FAILED = 10013
+IDS_MSG_BAKE_ALL_NONE = 10014
+IDS_MSG_BAKE_ALL_DONE = 10015
+IDS_MSG_BAKE_ALL_SKIPPED = 10016
+IDS_MSG_UNBAKE_ALL_NONE = 10017
+IDS_MSG_UNBAKE_ALL_DONE = 10018
+IDS_MSG_UNBAKE_ALL_NOTE = 10019
+IDS_MSG_BAKE_NEED_HOST = 10020
+IDS_MSG_BAKE_ALREADY_LOCKED = 10021
+IDS_MSG_BAKE_FAILED = 10022
+IDS_MSG_BAKE_DONE = 10023
+IDS_MSG_BAKE_FRAME_RANGE = 10024
+IDS_MSG_BAKE_LOCK_NOTICE = 10025
+IDS_MSG_UNBAKE_NO_BACKUP = 10026
+IDS_MSG_UNBAKE_FAILED = 10027
+IDS_MSG_UNBAKE_DONE = 10028
+IDS_MSG_REGISTER_TAG_FAILED = 10029
+IDS_MSG_REGISTER_CMD_FAILED = 10030
 
 _LOAD_DESC_FAIL_LOGGED = False
 
@@ -106,27 +139,81 @@ def _show_message_dialog(message: str) -> None:
         pass
 
 
+def _show_status_text(message: str) -> None:
+    """Show a non-blocking status message in the Cinema 4D status bar."""
+    try:
+        c4d.gui.StatusSetText(message)
+    except Exception:
+        pass
+
+
+def _load_string(symbol_id: int, default: str) -> str:
+    """Load a localized string from the plugin resource and fall back to ``default``."""
+    try:
+        value: str = GeLoadString(symbol_id)
+        if value:
+            return value
+    except Exception:
+        pass
+    return default
+
+
+def _format_string(symbol_id: int, default: str, **kwargs: object) -> str:
+    """Load and format a localized string template."""
+    template: str = _load_string(symbol_id, default)
+    try:
+        return template.format(**kwargs)
+    except Exception:
+        return template
+
+
 def _show_bake_all_result(baked_count: int, skipped_locked_count: int) -> None:
     """Report the Bake All result to the user."""
     if baked_count == 0 and skipped_locked_count == 0:
-        _show_message_dialog("Bake All: no Springy Keys tags were found in this document.")
+        _show_status_text(
+            _load_string(
+                IDS_MSG_BAKE_ALL_NONE,
+                "Bake All: no Springy Keys tags were found in this document.",
+            )
+        )
         return
 
-    message: str = f"Bake All completed on {baked_count} tag(s)."
+    message: str = _format_string(
+        IDS_MSG_BAKE_ALL_DONE,
+        "Bake All completed on {count} tag(s).",
+        count=baked_count,
+    )
     if skipped_locked_count:
-        message += f"\nSkipped {skipped_locked_count} baked tag(s). Please un-bake them first."
-    _show_message_dialog(message)
+        message += "\n" + _format_string(
+            IDS_MSG_BAKE_ALL_SKIPPED,
+            "Skipped {count} baked tag(s). Please un-bake them first.",
+            count=skipped_locked_count,
+        )
+    _show_status_text(message)
 
 
 def _show_unbake_all_result(invoked_count: int) -> None:
     """Report the Un-Bake All result to the user."""
     if invoked_count == 0:
-        _show_message_dialog("Un-Bake All: no Springy Keys tags were found in this document.")
+        _show_status_text(
+            _load_string(
+                IDS_MSG_UNBAKE_ALL_NONE,
+                "Un-Bake All: no Springy Keys tags were found in this document.",
+            )
+        )
         return
 
-    _show_message_dialog(
-        f"Un-Bake All completed on {invoked_count} tag(s).\n"
-        "Only tags with a saved bake backup were restored."
+    _show_status_text(
+        _format_string(
+            IDS_MSG_UNBAKE_ALL_DONE,
+            "Un-Bake All completed on {count} tag(s).",
+            count=invoked_count,
+        )
+        + "\n"
+        + _load_string(
+            IDS_MSG_UNBAKE_ALL_NOTE,
+            "Only tags with a saved bake backup were restored.",
+        )
     )
 
 
@@ -965,10 +1052,6 @@ class SpringyKeysTag(plugins.TagData):
         if not description.LoadDescription(PLUGIN_DESC_NAME):
             if not _LOAD_DESC_FAIL_LOGGED:
                 _LOAD_DESC_FAIL_LOGGED = True
-                _show_message_dialog(
-                    f"Springy Keys failed to load the tag description '{PLUGIN_DESC_NAME}'.\n"
-                    "Please check whether the res/description and res/strings_* files are present."
-                )
             return False
 
         bc = node.GetDataInstance()
@@ -980,7 +1063,7 @@ class SpringyKeysTag(plugins.TagData):
                     if not split:
                         db_p[c4d.DESC_NAME] = ""
                     else:
-                        db_p[c4d.DESC_NAME] = "Position Forces"
+                        db_p[c4d.DESC_NAME] = _load_string(IDS_POSITION_FORCES, "Position Forces")
                     db_p[c4d.DESC_HIDE] = False
                 db_s = description.GetParameterI(c4d.DescID(SPK_ID_S), None)
                 if db_s:
@@ -1083,13 +1166,23 @@ class SpringyKeysTag(plugins.TagData):
         doc = tag.GetDocument() if tag else None
         op = tag.GetObject() if tag else None
         if doc is None or op is None:
-            _show_message_dialog("Bake Keys requires a valid host object and document.")
+            _show_status_text(
+                _load_string(
+                    IDS_MSG_BAKE_NEED_HOST,
+                    "Bake Keys requires a valid host object and document.",
+                )
+            )
             return
         bc = tag.GetDataInstance()
         if bc is None:
             return
         if bc.GetBool(SPK_FORCES_LOCKED_BY_BAKE):
-            _show_message_dialog("This tag is already baked. Please run Un-Bake Keys before baking again.")
+            _show_status_text(
+                _load_string(
+                    IDS_MSG_BAKE_ALREADY_LOCKED,
+                    "This tag is already baked. Please run Un-Bake Keys before baking again.",
+                )
+            )
             return
         fps = max(int(doc.GetFps()), 1)
         sf, ef = _scene_preview_frame_range(doc)
@@ -1113,7 +1206,12 @@ class SpringyKeysTag(plugins.TagData):
             # (often zeros) and baked keys are wrong.
             samples: List[Tuple[c4d.Vector, c4d.Vector, c4d.Vector]] = []
             c4d.gui.StatusSetSpin()
-            c4d.gui.StatusSetText("Springy Keys: sampling for Bake Keys...")
+            c4d.gui.StatusSetText(
+                _load_string(
+                    IDS_STATUS_BAKE_SAMPLING,
+                    "Springy Keys: sampling for Bake Keys...",
+                )
+            )
             for f in range(sf, ef + 1):
                 doc.SetTime(c4d.BaseTime(f, fps))
                 doc.ExecutePasses(None, True, True, True, 0)
@@ -1123,7 +1221,12 @@ class SpringyKeysTag(plugins.TagData):
                 for comp in (c4d.VECTOR_X, c4d.VECTOR_Y, c4d.VECTOR_Z):
                     _delete_keys_in_frame_range_on_curve(op, base, comp, fps, sf, ef)
 
-            c4d.gui.StatusSetText("Springy Keys: writing keys...")
+            c4d.gui.StatusSetText(
+                _load_string(
+                    IDS_STATUS_BAKE_WRITING,
+                    "Springy Keys: writing keys...",
+                )
+            )
             bake_interp = c4d.CINTERPOLATION_LINEAR
             for i, f in enumerate(range(sf, ef + 1)):
                 bt = c4d.BaseTime(f, fps)
@@ -1153,7 +1256,13 @@ class SpringyKeysTag(plugins.TagData):
             bc.SetString(SPK_PSR_BACKUP_PAYLOAD, _psr_backup_to_json(self._psr_key_backup))
             bake_ok = True
         except Exception as ex:
-            _show_message_dialog(f"Bake Keys failed.\n{ex}")
+            _show_message_dialog(
+                _format_string(
+                    IDS_MSG_BAKE_FAILED,
+                    "Bake Keys failed.\n{error}",
+                    error=ex,
+                )
+            )
         finally:
             try:
                 doc.SetTime(saved)
@@ -1167,10 +1276,24 @@ class SpringyKeysTag(plugins.TagData):
                 tag.SetDirty(c4d.DIRTYFLAGS_DATA)
             except Exception:
                 pass
-            _show_message_dialog(
-                f"Bake Keys completed for '{op.GetName()}'.\n"
-                f"Frame range: {sf}-{ef}\n"
-                "Spring forces are now locked until Un-Bake Keys is used."
+            _show_status_text(
+                _format_string(
+                    IDS_MSG_BAKE_DONE,
+                    "Bake Keys completed for '{name}'.",
+                    name=op.GetName(),
+                )
+                + "\n"
+                + _format_string(
+                    IDS_MSG_BAKE_FRAME_RANGE,
+                    "Frame range: {start}-{end}",
+                    start=sf,
+                    end=ef,
+                )
+                + "\n"
+                + _load_string(
+                    IDS_MSG_BAKE_LOCK_NOTICE,
+                    "Spring forces are now locked until Un-Bake Keys is used.",
+                )
             )
 
     def _restore_psr_from_backup(self, node):
@@ -1181,7 +1304,12 @@ class SpringyKeysTag(plugins.TagData):
             return
         backup = self._psr_backup_resolve(tag)
         if backup is None:
-            _show_message_dialog("No baked backup was found. Please run Bake Keys first.")
+            _show_status_text(
+                _load_string(
+                    IDS_MSG_UNBAKE_NO_BACKUP,
+                    "No baked backup was found. Please run Bake Keys first.",
+                )
+            )
             return
         bc = tag.GetDataInstance()
         doc.StartUndo()
@@ -1202,7 +1330,13 @@ class SpringyKeysTag(plugins.TagData):
             self._op_state = _State()
             self._prv_state = _State()
         except Exception as ex:
-            _show_message_dialog(f"Un-Bake Keys failed.\n{ex}")
+            _show_message_dialog(
+                _format_string(
+                    IDS_MSG_UNBAKE_FAILED,
+                    "Un-Bake Keys failed.\n{error}",
+                    error=ex,
+                )
+            )
         finally:
             doc.EndUndo()
         c4d.EventAdd()
@@ -1210,7 +1344,12 @@ class SpringyKeysTag(plugins.TagData):
             tag.SetDirty(c4d.DIRTYFLAGS_DATA)
         except Exception:
             pass
-        _show_message_dialog("Un-Bake Keys completed. The pre-bake keys were restored and spring forces were re-enabled.")
+        _show_status_text(
+            _load_string(
+                IDS_MSG_UNBAKE_DONE,
+                "Un-Bake Keys completed. The pre-bake keys were restored and spring forces were re-enabled.",
+            )
+        )
 
     def Execute(self, tag, doc, op, bt, priority, flags):
         bc = tag.GetDataInstance()
@@ -1540,17 +1679,24 @@ if __name__ == '__main__':
             tag_icon = bmp
     reg_ok = plugins.RegisterTagPlugin(
         id=PLUGIN_ID_TAG,
-        str="Springy Keys (Bake PSR)",
+        str=_load_string(IDS_TAG_NAME, "Springy Keys (Bake PSR)"),
         info=c4d.TAG_EXPRESSION | c4d.TAG_VISIBLE,
         g=SpringyKeysTag,
         description=PLUGIN_DESC_NAME,
         icon=tag_icon,
     )
 
-
     for cmd_id, title, cls in (
-        (PLUGIN_ID_CMD_BAKE_ALL, "Springy Keys: Bake All", SpringyKeysBakeAllCommand),
-        (PLUGIN_ID_CMD_UNBAKE_ALL, "Springy Keys: Un-Bake All", SpringyKeysUnbakeAllCommand),
+        (
+            PLUGIN_ID_CMD_BAKE_ALL,
+            _load_string(IDS_CMD_BAKE_ALL, "Springy Keys: Bake All"),
+            SpringyKeysBakeAllCommand,
+        ),
+        (
+            PLUGIN_ID_CMD_UNBAKE_ALL,
+            _load_string(IDS_CMD_UNBAKE_ALL, "Springy Keys: Un-Bake All"),
+            SpringyKeysUnbakeAllCommand,
+        ),
     ):
         reg_cmd_ok: bool = plugins.RegisterCommandPlugin(
             id=cmd_id,
@@ -1560,4 +1706,3 @@ if __name__ == '__main__':
             icon=None,
             dat=cls(),
         )
-

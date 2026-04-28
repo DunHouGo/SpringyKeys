@@ -7,4 +7,28 @@ STRINGTABLE
 	IDS_POS_FORCES "Position";
 	IDS_SCA_FORCES "Scale";
 	IDS_ROT_FORCES "Rotation";
+	IDS_POSITION_FORCES "Position Forces";
+	IDS_TAG_NAME "Springy Keys (Bake PSR)";
+	IDS_CMD_BAKE_ALL "Springy Keys: Bake All";
+	IDS_CMD_UNBAKE_ALL "Springy Keys: Un-Bake All";
+	IDS_STATUS_BAKE_SAMPLING "Springy Keys: sampling for Bake Keys...";
+	IDS_STATUS_BAKE_WRITING "Springy Keys: writing keys...";
+	IDS_MSG_DESC_LOAD_FAILED "Springy Keys failed to load the tag description '{name}'.\nPlease check whether the res/description and res/strings_* files are present.";
+	IDS_MSG_BAKE_ALL_NONE "Bake All: no Springy Keys tags were found in this document.";
+	IDS_MSG_BAKE_ALL_DONE "Bake All completed on {count} tag(s).";
+	IDS_MSG_BAKE_ALL_SKIPPED "Skipped {count} baked tag(s). Please un-bake them first.";
+	IDS_MSG_UNBAKE_ALL_NONE "Un-Bake All: no Springy Keys tags were found in this document.";
+	IDS_MSG_UNBAKE_ALL_DONE "Un-Bake All completed on {count} tag(s).";
+	IDS_MSG_UNBAKE_ALL_NOTE "Only tags with a saved bake backup were restored.";
+	IDS_MSG_BAKE_NEED_HOST "Bake Keys requires a valid host object and document.";
+	IDS_MSG_BAKE_ALREADY_LOCKED "This tag is already baked. Please run Un-Bake Keys before baking again.";
+	IDS_MSG_BAKE_FAILED "Bake Keys failed.\n{error}";
+	IDS_MSG_BAKE_DONE "Bake Keys completed for '{name}'.";
+	IDS_MSG_BAKE_FRAME_RANGE "Frame range: {start}-{end}";
+	IDS_MSG_BAKE_LOCK_NOTICE "Spring forces are now locked until Un-Bake Keys is used.";
+	IDS_MSG_UNBAKE_NO_BACKUP "No baked backup was found. Please run Bake Keys first.";
+	IDS_MSG_UNBAKE_FAILED "Un-Bake Keys failed.\n{error}";
+	IDS_MSG_UNBAKE_DONE "Un-Bake Keys completed. The pre-bake keys were restored and spring forces were re-enabled.";
+	IDS_MSG_REGISTER_TAG_FAILED "Failed to register the Springy Keys tag plugin.";
+	IDS_MSG_REGISTER_CMD_FAILED "Failed to register command plugin: {name}.";
 }
